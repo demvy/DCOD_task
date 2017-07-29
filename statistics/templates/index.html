@@ -1,0 +1,103 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Analysis of data</title>
+    <!-- Styles -->
+    <style>
+        #chartdiv {
+            width	: 100%;
+	        height	: 500px;
+	        font-size	: 11px;
+        }
+    </style>
+
+    <!-- Resources -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+    <script src="https://www.amcharts.com/lib/3/serial.js"></script>
+    <script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
+    <link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
+    <script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
+
+    <!-- Chart code -->
+    <script>
+        //function that sends data with region to views and gets json with data of region
+        function answer() {
+        console.log("create post is working!"); // sanity check
+        $.ajax({
+            url: "answer/", // the endpoint
+            type: "POST", // http method
+            data: {region: $('#select').val()}, // data sent with the post request
+            // handle a successful response
+            success: function(json){
+                plot_diagram(json);
+                },
+            // handle a non-successful response
+            error: function (xhr, errmsg, err) {
+                $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: " + errmsg +
+                " <a href='#' class='close'>&times;</a></div>"); // add the error to the dom
+                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+            }
+        });
+    };
+
+        //function of library amcharts to plot diagram, get json like dataProvider
+        function plot_diagram(json){
+                //var parsed = JSON.parse(json);
+                var chart = AmCharts.makeChart( "chartdiv", {
+                  "type": "serial",
+                  "theme": "light",
+                  "dataProvider": json,
+                  "valueAxes": [ {
+                    "gridColor": "#FFFFFF",
+                    "gridAlpha": 0.2,
+                    "dashLength": 0
+                  } ],
+                  "gridAboveGraphs": true,
+                  "startDuration": 1,
+                  "graphs": [ {
+                    "balloonText": "[[category]]: <b>[[value]]</b>",
+                    "fillAlphas": 0.8,
+                    "lineAlpha": 0.2,
+                    "type": "column",
+                    "valueField": "value"
+                  } ],
+                  "chartCursor": {
+                    "categoryBalloonEnabled": false,
+                    "cursorAlpha": 0,
+                    "zoomable": false
+                  },
+                  "categoryField": "country",
+                  "categoryAxis": {
+                    "gridPosition": "start",
+                    "gridAlpha": 0,
+                    "tickPosition": "start",
+                    "tickLength": 20
+                  },
+                  "export": {
+                    "enabled": true
+                  }
+
+                } );}
+    </script>
+</head>
+<body>
+    <h3>Select region please and then statistics will appear</h3>
+    <!-- select, generated from python list of regions -->
+    <select onchange="answer()" id="select">
+    {% for group in groups %}
+        <option value="{{ group }}">{{ group }}</option>
+    {% endfor %}
+    </select>
+
+   <!-- <form method="POST" id="post-form">
+        "csrf_token missing in this time"
+        <input type="submit" value="Post" class="button">
+    </form>
+    -->
+    <div id="chartdiv"></div>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>
